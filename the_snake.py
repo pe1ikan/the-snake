@@ -48,30 +48,32 @@ class GameObject:
 
     def draw(self):
         """Отрисовывает игровой объект."""
-        raise NotImplementedError
+        raise NotImplementedError(
+            'В дочернем классе нужно реализовать метод draw().'
+        )
 
 
 class Apple(GameObject):
     """Показывает яблоко на игровом поле."""
 
-    def __init__(self, snake=None):
+    def __init__(self, occupied_positions=None):
         super().__init__()
         self.body_color = APPLE_COLOR
-        if snake is None:
-            self.randomize_position()
-        else:
-            self.randomize_position(snake)
+        self.randomize_position(occupied_positions)
 
-    def randomize_position(self, snake=None):
+    def randomize_position(self, occupied_positions=None):
         """Перемещает яблоко на игровом поле."""
-        while True:
+        if occupied_positions is None:
+            occupied_positions = []
+
+        position = None
+        while position is None or position in occupied_positions:
             position = (
                 randint(0, GRID_WIDTH - 1) * GRID_SIZE,
                 randint(0, GRID_HEIGHT - 1) * GRID_SIZE,
             )
-            if snake is None or position not in snake.positions:
-                self.position = position
-                return
+
+        self.position = position
 
     def draw(self):
         """Отрисовывает яблоко на игровом поле."""
@@ -124,7 +126,6 @@ class Snake(GameObject):
 
     def reset(self):
         """Возвращает змейку в начальное состояние."""
-        self.position = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
         self._set_state(choice((UP, DOWN, LEFT, RIGHT)))
 
     def draw(self):
@@ -161,7 +162,7 @@ def main():
     # Инициализация PyGame:
     pygame.init()
     snake = Snake()
-    apple = Apple(snake)
+    apple = Apple(snake.positions)
     screen.fill(BOARD_BACKGROUND_COLOR)
 
     while True:
@@ -172,11 +173,11 @@ def main():
 
         if snake.get_head_position() == apple.position:
             snake.length += 1
-            apple.randomize_position(snake)
+            apple.randomize_position(snake.positions)
 
         elif snake.get_head_position() in snake.positions[1:]:
             snake.reset()
-            apple.randomize_position(snake)
+            apple.randomize_position(snake.positions)
             screen.fill(BOARD_BACKGROUND_COLOR)
 
         snake.draw()
